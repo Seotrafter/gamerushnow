@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower Tactician - Maze Defenders</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel='icon' href='/src/icons/logo.png' type='image/x-icon'>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkblue: '#050814',
+                        midblue: '#024f94',
+                        accent: '#e53935',
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'wiggle': 'wiggle 1s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': {
+                                transform: 'translateY(0)'
+                            },
+                            '50%': {
+                                transform: 'translateY(-10px)'
+                            },
+                        },
+                        wiggle: {
+                            '0%, 100%': {
+                                transform: 'rotate(-3deg)'
+                            },
+                            '50%': {
+                                transform: 'rotate(3deg)'
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #050814;
+            scroll-behavior: smooth;
+        }
+
+        .trapezoid-button {
+            clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+            transition: all 0.3s ease;
+        }
+
+        .trapezoid-button:hover {
+            transform: scale(1.05);
+        }
+
+        .maze-pattern {
+            background-image:
+                linear-gradient(rgba(2, 79, 148, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(2, 79, 148, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .glow {
+            box-shadow: 0 0 15px rgba(2, 79, 148, 0.7);
+        }
+
+        .hero-diagonal {
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+        }
+
+        .diagonal-bottom {
+            clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
+        }
+
+        .floating-tower {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .floating-slow {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-medium {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .red-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(229, 57, 53, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hexagon {
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+
+        .maze-pattern {
+            background-image:
+                linear-gradient(rgba(2, 79, 148, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(2, 79, 148, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .glow {
+            box-shadow: 0 0 15px rgba(2, 79, 148, 0.7);
+        }
+
+        .trapezoid-button {
+            clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+            transition: all 0.3s ease;
+        }
+
+        .trapezoid-button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Animation classes */
+        .floating-medium {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .floating-slow {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Red floating particles background effect -->
+    <div class="particles fixed top-0 left-0 w-full h-full pointer-events-none z-0"></div>
+
+    <!-- Header -->
+    <header class=" top-0 w-full z-50 bg-darkblue/80 backdrop-blur-md border-b border-midblue/40">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <a href="/" class="flex items-center mb-4 md:mb-0">
+                    <div class="bg-midblue p-2 rounded-full glow mr-3">
+                        <div class="w-10 h-10 text-white flex items-center justify-center">
+                            <i class="fas fa-chess-rook text-2xl"></i>
+                        </div>
+                    </div>
+                    <h1 class="text-white text-xl md:text-2xl font-bold tracking-wider">TOWER TACTICIAN</h1>
+                </a>
+
+                <nav class="flex flex-wrap justify-center gap-2 md:gap-4">
+                    <a href="/#features" class="trapezoid-button bg-midblue text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-midblue/80">
+                        FEATURES
+                    </a>
+                    <a href="/#gameplay" class="trapezoid-button bg-midblue text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-midblue/80">
+                        GAMEPLAY
+                    </a>
+                    <a href="/#world" class="trapezoid-button bg-midblue text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-midblue/80">
+                        WORLD
+                    </a>
+                    <a href="/#reviews" class="trapezoid-button bg-midblue text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-midblue/80">
+                        REVIEWS
+                    </a>
+                    <a href="/#download" class="trapezoid-button bg-accent text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-accent/90">
+                        DOWNLOAD
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+    <!-- Privacy Policy Header -->
+    <section class="relative bg-darkblue pt-32 pb-16 overflow-hidden maze-pattern">
+        <div class="absolute top-40 left-10 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
+        <div class="absolute bottom-20 right-10 w-40 h-40 bg-midblue/20 rounded-full blur-2xl"></div>
+
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold text-white leading-tight">
+                    <span class="text-midblue">PRIVACY</span> POLICY
+                </h1>
+                <div class="w-24 h-1 bg-accent mx-auto mt-6"></div>
+                <p class="text-white/70 max-w-2xl mx-auto mt-6 text-lg">
+                    At TOWER TACTICIAN, your privacy is important to us. This policy outlines how we collect, use, and protect your information.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Introduction Section -->
+    <section class="relative bg-darkblue/95 py-12">
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 mb-12 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-accent/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6">
+                    Introduction to <span class="text-midblue">TOWER TACTICIAN</span> Privacy
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    At TOWER TACTICIAN, accessible from https://gamerushnow.com/, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that are collected and recorded by TOWER TACTICIAN and how we use it.
+                </p>
+
+                <p class="text-white/80 mb-4">
+                    If you have additional questions or require more information about our Privacy Policy, do not hesitate to contact us.
+                </p>
+
+                <div class="w-full h-px bg-midblue/30 my-8"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6">
+                    <i class="fas fa-file-alt text-midblue mr-3"></i> Log Files
+                </h2>
+
+                <p class="text-white/80 mb-4">
+                    TOWER TACTICIAN follows a standard procedure of using log files. These files log visitors when they visit websites. All hosting companies do this and are a part of hosting services' analytics. The information collected by log files includes internet protocol (IP) addresses, browser type, Internet Service Provider (ISP), date and time stamp, referring/exit pages, and possibly the number of clicks. These are not linked to any personally identifiable information. The purpose of the information is to analyze trends, administer the site, track users' movement on the website, and gather demographic information. Our Privacy Policy was created with the help of the Privacy Policy Generator.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cookies Section -->
+    <section class="relative bg-darkblue/90 py-12">
+        <div class="absolute inset-0 maze-pattern opacity-10"></div>
+
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 mb-12 relative overflow-hidden">
+                <div class="absolute bottom-0 left-0 w-40 h-40 bg-midblue/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-cookie-bite text-midblue mr-3"></i> Cookies and Web Beacons
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    Like any other website, TOWER TACTICIAN uses "cookies." These cookies store information, including visitors' preferences and the pages on the website that the visitor accessed or visited. The information is used to optimize users' experience by customizing our web page content based on visitors' browser type and/or other information.
+                </p>
+
+                <p class="text-white/80 mb-6">
+                    For more general information on cookies, please read the "Cookies" article from the Privacy Policy Generator.
+                </p>
+
+                <div class="flex flex-wrap gap-4 my-8">
+                    <div class="bg-midblue/20 border border-midblue/40 rounded-lg px-4 py-3 text-white flex items-center">
+                        <i class="fas fa-cookie text-accent mr-2"></i> Session Cookies
+                    </div>
+                    <div class="bg-midblue/20 border border-midblue/40 rounded-lg px-4 py-3 text-white flex items-center">
+                        <i class="fas fa-cookie text-accent mr-2"></i> Preference Cookies
+                    </div>
+                    <div class="bg-midblue/20 border border-midblue/40 rounded-lg px-4 py-3 text-white flex items-center">
+                        <i class="fas fa-cookie text-accent mr-2"></i> Analytics Cookies
+                    </div>
+                </div>
+
+                <div class="w-full h-px bg-midblue/30 my-8"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-ad text-midblue mr-3"></i> Google DoubleClick DART Cookie
+                </h2>
+
+                <p class="text-white/80 mb-4">
+                    Google is one of the third-party vendors on our site. It also uses cookies, known as DART cookies, to serve ads to our site visitors based on their visit to https://gamerushnow.com/ and other sites on the internet. However, visitors may choose to decline the use of DART cookies by visiting the Google ad and content network Privacy Policy at the following URL: <a href="https://policies.google.com/technologies/ads" class="text-midblue hover:text-white transition-colors" target="_blank">https://policies.google.com/technologies/ads</a>.
+                </p>
+            </div>
+        </div>
+    </section>
+    <!-- Advertising Partners Section -->
+    <section class="relative bg-darkblue/95 py-12">
+        <div class="absolute inset-0 maze-pattern opacity-5"></div>
+        <div class="absolute top-20 right-10 w-3 h-10 bg-accent/40 floating-medium"></div>
+        <div class="absolute bottom-40 left-20 w-6 h-6 rotate-45 bg-midblue/30 floating-slow"></div>
+
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 mb-12 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-40 h-40 bg-accent/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-handshake text-midblue mr-3"></i> Our Advertising Partners
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    Some advertisers on our site may use cookies and web beacons. Our advertising partners are listed below. Each of our advertising partners has its own Privacy Policy for their policies on user data. For easier access, we hyperlinked to their Privacy Policies below.
+                </p>
+
+                <div class="bg-midblue/10 border border-midblue/30 rounded-lg p-4 mb-6">
+                    <div class="flex items-center mb-2">
+                        <i class="fab fa-google text-white mr-2"></i>
+                        <span class="text-white font-semibold">Google</span>
+                    </div>
+                    <a href="https://policies.google.com/technologies/ads" class="text-midblue hover:text-white transition-colors" target="_blank">https://policies.google.com/technologies/ads</a>
+                </div>
+
+                <div class="w-full h-px bg-midblue/30 my-8"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-shield-alt text-midblue mr-3"></i> Privacy Policies
+                </h2>
+
+                <p class="text-white/80 mb-4">
+                    You may consult this list to find the Privacy Policy for each of the advertising partners of TOWER TACTICIAN.
+                </p>
+
+                <p class="text-white/80 mb-6">
+                    Third-party ad servers or ad networks use technologies like cookies, JavaScript, or Web Beacons in their respective advertisements and links that appear on TOWER TACTICIAN, which are sent directly to users' browsers. They automatically receive your IP address when this occurs. These technologies are used to measure the effectiveness of their advertising campaigns and/or personalize the advertising content that you see on websites you visit.
+                </p>
+
+                <p class="text-white/80 mb-4">
+                    Note that TOWER TACTICIAN has no access to or control over these cookies that third-party advertisers use.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Third-Party Policies Section -->
+    <section class="relative bg-darkblue/90 py-12">
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 mb-12 relative overflow-hidden">
+                <div class="absolute bottom-0 right-0 w-40 h-40 bg-midblue/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-user-shield text-midblue mr-3"></i> Third-Party Privacy Policies
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    TOWER TACTICIAN's Privacy Policy does not apply to other advertisers or websites. We advise you to consult the respective Privacy Policies of these third-party ad servers for more detailed information. It may include their practices and instructions about how to opt out of certain options.
+                </p>
+
+                <p class="text-white/80 mb-6">
+                    You can choose to disable cookies through your browser settings. More detailed information about cookie management with specific web browsers can be found on the browsers' respective websites.
+                </p>
+
+                <div class="flex flex-wrap gap-6 my-8">
+                    <div class="trapezoid-button bg-midblue/20 border border-midblue/50 px-6 py-3 text-white hover:bg-midblue/30 transition-all duration-300 inline-flex items-center">
+                        <i class="fas fa-cog mr-2"></i> Manage Cookie Settings
+                    </div>
+                    <div class="trapezoid-button bg-midblue/20 border border-midblue/50 px-6 py-3 text-white hover:bg-midblue/30 transition-all duration-300 inline-flex items-center">
+                        <i class="fas fa-sliders-h mr-2"></i> Adjust Privacy Preferences
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Children's Information Section -->
+    <section class="relative bg-darkblue/95 py-12">
+        <div class="absolute inset-0 maze-pattern opacity-5"></div>
+        <div class="absolute top-40 right-20 w-4 h-4 bg-accent/60 rounded-full floating-medium"></div>
+
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 mb-12 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-accent/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-child text-midblue mr-3"></i> Children's Information
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    Another part of our priority is adding protection for children while using the internet. We encourage parents and guardians to observe, participate in, and/or monitor and guide their children's online activity.
+                </p>
+
+                <p class="text-white/80 mb-6">
+                    TOWER TACTICIAN does not knowingly collect any personally identifiable information from children under 13. If you believe your child provided this kind of information on our website, we strongly encourage you to contact us immediately, and we will do our best to promptly remove such information from our records.
+                </p>
+
+                <div class="bg-accent/10 border border-accent/30 rounded-lg p-5 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-circle text-accent mt-1 mr-3 text-xl"></i>
+                        <div>
+                            <h4 class="text-white font-bold mb-2">Important Notice for Parents</h4>
+                            <p class="text-white/80">
+                                Our game is designed for players 7 years and older. We take children's privacy very seriously and comply with all applicable laws regarding children's data protection.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full h-px bg-midblue/30 my-8"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-globe text-midblue mr-3"></i> Online Privacy Policy Only
+                </h2>
+
+                <p class="text-white/80 mb-4">
+                    This Privacy Policy applies only to our online activities and is valid for visitors to our website regarding the information that they share and/or collect on TOWER TACTICIAN. This policy does not apply to any information collected offline or via channels other than this website.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Consent Section -->
+    <section class="relative bg-darkblue/90 py-12 pb-20">
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 relative overflow-hidden">
+                <div class="absolute bottom-0 left-0 w-40 h-40 bg-midblue/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-check-circle text-midblue mr-3"></i> Consent
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    By using our website, you consent to our Privacy Policy and agree to its Terms and Conditions.
+                </p>
+
+                <div class="flex flex-wrap gap-6 mt-10">
+                    <a href="/" class="trapezoid-button bg-midblue text-white px-8 py-3 text-lg font-bold hover:bg-midblue/80 transition-all duration-300 inline-flex items-center">
+                        <i class="fas fa-home mr-2"></i> Return to Home
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom decoration -->
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-midblue/0 via-midblue/40 to-midblue/0"></div>
+    </section>
+
+
+    <!-- Footer -->
+    <footer class="relative bg-darkblue/90 pt-16 pb-8 border-t border-midblue/30">
+        <div class="absolute inset-0 maze-pattern opacity-10"></div>
+        <div class="container mx-auto px-4 relative z-10">
+
+
+            <div class="border-t border-midblue/30 pt-6 mt-6 flex flex-col md:flex-row justify-between items-center">
+                <div class="text-white/60 text-sm mb-4 md:mb-0">
+                    &copy; 2025 Tower Tactician. All rights reserved.
+                </div>
+
+                <div class="flex items-center space-x-2 text-white/60 text-sm">
+                    <a href="/poliprivacy725/" class="hover:text-white transition-colors duration-300">Privacy</a>
+                    <span>•</span>
+                    <a href="/service2465/" class="hover:text-white transition-colors duration-300">Terms</a>
+                    <span>•</span>
+                    <a href="/cookiess367/" class="hover:text-white transition-colors duration-300">Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for particles and animations -->
+    <script>
+        // Create red floating particles
+        function createParticles() {
+            const particlesContainer = document.querySelector('.particles');
+            const particleCount = 30;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('red-particle');
+
+                // Random position
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+
+                // Random size
+                const size = Math.random() * 6 + 2;
+
+                // Set styles
+                particle.style.left = `${posX}%`;
+                particle.style.top = `${posY}%`;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.opacity = Math.random() * 0.5 + 0.1;
+
+                // Animation
+                const duration = Math.random() * 20 + 10;
+                particle.style.animation = `float ${duration}s ease-in-out infinite`;
+                particle.style.animationDelay = `-${Math.random() * 10}s`;
+
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Initialize particles
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+
+            // Smooth scroll for navigation
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
+
+
+<?php
+$cookieConsentHtml = '
+<style>
+.cookie-consent {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgba(5, 8, 20, 0.95); /* Changed to match the darkblue color */
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -2px 15px rgba(2, 79, 148, 0.4); /* Shadow with midblue color */
+    width: 100%;
+    transform: translateY(100%);
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cookie-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    position: relative;
+}
+
+.cookie-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        to right,
+        rgba(2, 79, 148, 0.1), /* Gradient with midblue color */
+        rgba(255, 255, 255, 0.05)
+    );
+    pointer-events: none;
+}
+
+.cookie-content {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.cookie-title {
+    font-size: 1.2rem;
+    color: #ffffff; 
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-right: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: "Orbitron", sans-serif; /* Changed to match the website font */
+}
+
+.cookie-title i {
+    color: #024f94; /* Icon in midblue color */
+    font-size: 1.5rem;
+}
+
+.cookie-text {
+    color: rgba(255, 255, 255, 0.8); /* Text color matching website */
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.5;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.cookie-link {
+    color: #024f94; /* Links in midblue color */
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.cookie-link::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: #024f94; /* Underline in midblue */
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.cookie-link:hover::after {
+    transform: scaleX(1);
+}
+
+.cookie-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.cookie-button-reject,
+.cookie-button-accept {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    font-family: "Orbitron", sans-serif;
+    /* Trapezoid buttons like on the site */
+    clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+}
+
+.cookie-button-reject {
+    background: transparent;
+    border: 2px solid #024f94; /* Border with midblue color */
+    color: #ffffff;
+}
+
+.cookie-button-reject:hover {
+    background: rgba(2, 79, 148, 0.2); /* Hover with midblue color */
+    border-color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.cookie-button-accept {
+    background: #e53935; /* Red accent color from the site */
+    color: #ffffff;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cookie-button-accept::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: all 0.6s;
+}
+
+.cookie-button-accept:hover {
+    background: rgba(229, 57, 53, 0.9); /* Lighter red on hover */
+    transform: translateY(-2px) scale(1.05);
+}
+
+.cookie-button-accept:hover::before {
+    left: 100%;
+}
+
+@media (max-width: 768px) {
+    .cookie-container {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .cookie-content {
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .cookie-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .cookie-button-reject,
+    .cookie-button-accept {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .cookie-title {
+        margin-right: 0;
+        justify-content: center;
+    }
+}
+</style>
+<div id="cookieConsent" class="cookie-consent">
+    <div class="cookie-container">
+        <div class="cookie-content">
+            <h3 class="cookie-title">
+                <i class="fas fa-cookie-bite"></i>
+                Cookie Policy
+            </h3>
+            <p class="cookie-text ">
+                At Tower Tactician we use cookies to improve your gaming experience. By continuing to use our website, you accept our use of cookies. For more information, please read our
+                <a href="/poliprivacy725/" class="cookie-link">Privacy Policy</a>,
+                the
+                <a href="/service2465/" class="cookie-link">Terms of Service</a>
+                and the
+                <a href="/cookiess367/" class="cookie-link">Cookie Policy</a>.
+            </p>
+        </div>
+        
+        <div class="cookie-buttons">
+            <button id="rejectCookies" class="cookie-button-reject">
+                Decline
+            </button>
+            <button id="acceptCookies" class="cookie-button-accept">
+                Accept
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+   const cookieConsent = document.getElementById("cookieConsent");
+   const acceptBtn = document.getElementById("acceptCookies");
+   const rejectBtn = document.getElementById("rejectCookies");
+   
+   if (!getCookie("aprenderd_cookie_consent")) {
+       setTimeout(() => {
+           cookieConsent.style.transform = "translateY(0)";
+       }, 1000);
+   }
+
+   function getCookie(name) {
+       let matches = document.cookie.match(new RegExp(
+           "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, "\\$1") + "=([^;]*)"
+       ));
+       return matches ? decodeURIComponent(matches[1]) : undefined;
+   }
+   
+   function setCookie(name, value, days) {
+       const date = new Date();
+       date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+       const expires = "; expires=" + date.toUTCString();
+       document.cookie = name + "=" + value + expires + "; path=/; SameSite=Strict; Secure";
+   }
+
+   function handleConsent(consent) {
+       setCookie("aprenderd_cookie_consent", consent, 365);
+       cookieConsent.style.transform = "translateY(100%)";
+       
+       setTimeout(() => {
+           cookieConsent.remove();
+       }, 500);
+   }
+
+   acceptBtn.addEventListener("click", () => handleConsent("accepted"));
+   rejectBtn.addEventListener("click", () => handleConsent("rejected"));
+});
+</script>
+';
+
+if (!isset($_COOKIE["aprenderd_cookie_consent"])) {
+    echo $cookieConsentHtml;
+}
+?>

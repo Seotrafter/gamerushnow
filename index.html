@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower Tactician - Maze Defenders</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel='icon' href='/src/icons/logo.png' type='image/x-icon'>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkblue: '#050814',
+                        midblue: '#024f94',
+                        accent: '#e53935',
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'wiggle': 'wiggle 1s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': {
+                                transform: 'translateY(0)'
+                            },
+                            '50%': {
+                                transform: 'translateY(-10px)'
+                            },
+                        },
+                        wiggle: {
+                            '0%, 100%': {
+                                transform: 'rotate(-3deg)'
+                            },
+                            '50%': {
+                                transform: 'rotate(3deg)'
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #050814;
+            scroll-behavior: smooth;
+        }
+
+        .trapezoid-button {
+            clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+            transition: all 0.3s ease;
+        }
+
+        .trapezoid-button:hover {
+            transform: scale(1.05);
+        }
+
+        .maze-pattern {
+            background-image:
+                linear-gradient(rgba(2, 79, 148, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(2, 79, 148, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .glow {
+            box-shadow: 0 0 15px rgba(2, 79, 148, 0.7);
+        }
+
+        .hero-diagonal {
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+        }
+
+        .diagonal-bottom {
+            clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
+        }
+
+        .floating-tower {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .floating-slow {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-medium {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .red-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(229, 57, 53, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hexagon {
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Red floating particles background effect -->
+    <div class="particles fixed top-0 left-0 w-full h-full pointer-events-none z-0"></div>
+
+    <!-- Header -->
+    <header class=" top-0 w-full z-50 bg-darkblue/80 backdrop-blur-md border-b border-midblue/40">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <a href="/" class="flex items-center mb-4 md:mb-0">
+                    <div class="bg-midblue p-2 rounded-full glow mr-3">
+                        <div class="w-10 h-10 text-white flex items-center justify-center">
+                            <i class="fas fa-chess-rook text-2xl"></i>
+                        </div>
+                    </div>
+                    <h1 class="text-white text-xl md:text-2xl font-bold tracking-wider">TOWER TACTICIAN</h1>
+                </a>
+
+                <nav class="flex flex-wrap justify-center gap-2 md:gap-4">
+                    <a href="#features" class="trapezoid-button bg-midblue text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-midblue/80">
+                        FEATURES
+                    </a>
+                    <a href="#gameplay" class="trapezoid-button bg-midblue text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-midblue/80">
+                        GAMEPLAY
+                    </a>
+                    <a href="#world" class="trapezoid-button bg-midblue text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-midblue/80">
+                        WORLD
+                    </a>
+                    <a href="#reviews" class="trapezoid-button bg-midblue text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-midblue/80">
+                        REVIEWS
+                    </a>
+                    <a href="#download" class="trapezoid-button bg-accent text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-accent/90">
+                        DOWNLOAD
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-diagonal relative bg-darkblue pt-24 pb-32 overflow-hidden maze-pattern">
+        <div class="container mx-auto px-4 pt-16 md:pt-24">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-10">
+                <div class="md:w-1/2 z-10">
+                    <h1 class="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
+                        <span class="text-midblue">MAZE</span> DEFENDERS
+                        <span class="block text-2xl md:text-3xl mt-2">Where Strategy Rules</span>
+                    </h1>
+                    <p class="text-white/80 text-lg mb-8">
+                        The ultimate 3D Tower Defense experience where maze building and tower placement are key. Create complex labyrinths, deploy powerful towers, and cast devastating spells in this strategic fantasy adventure.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <a href="#download" class="trapezoid-button bg-accent text-white px-8 py-3 text-lg font-bold hover:bg-accent/90">
+                            GET STARTED <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                        <a href="#gameplay" class="trapezoid-button bg-transparent border-2 border-midblue text-white px-8 py-3 text-lg font-bold hover:bg-midblue/20">
+                            LEARN MORE
+                        </a>
+                    </div>
+
+                    <div class="mt-8 flex flex-wrap gap-4">
+                        <div class="border border-midblue/40 bg-darkblue/40 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center text-white/90">
+                            <i class="fas fa-gamepad mr-2 text-midblue"></i> Strategy
+                        </div>
+                        <div class="border border-midblue/40 bg-darkblue/40 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center text-white/90">
+                            <i class="fas fa-chess-rook mr-2 text-midblue"></i> Tower Defense
+                        </div>
+                        <div class="border border-midblue/40 bg-darkblue/40 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center text-white/90">
+                            <i class="fas fa-user mr-2 text-midblue"></i> Single Player
+                        </div>
+                        <div class="border border-midblue/40 bg-darkblue/40 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center text-white/90">
+                            <i class="fas fa-wifi-slash mr-2 text-midblue"></i> Offline
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:w-5/12 relative">
+                    <div class="floating-tower relative bg-midblue/20 backdrop-blur-sm border-2 border-midblue/40 w-[65%] justify-center items-center rounded-2xl p-6 glow">
+                        <div class="absolute -top-10 -right-10 w-20 h-20 bg-accent/30 rounded-full blur-xl"></div>
+                        <div class="absolute -bottom-8 -left-8 w-16 h-16 bg-midblue/40 rounded-full blur-xl"></div>
+                        <img src="/src/img/game-maine.png" alt="Maze Defenders Gameplay" class="rounded-lg justify-center block items-center shadow-lg w-[70%]" style="margin:0 auto;">
+                        <div class="absolute top-2 left-2 bg-accent/80 text-white text-xs rounded-full px-2 py-1">
+                            3D FANTASY WORLD
+                        </div>
+                        <div class="absolute -bottom-5 left-0 right-0 mx-auto w-3/4 h-10 bg-darkblue/80 backdrop-blur-sm border border-midblue/40 rounded-lg flex items-center justify-center text-white">
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <span class="font-bold">4.0</span>
+                            <span class="mx-1">|</span>
+                            <span>50K+ Downloads</span>
+                        </div>
+                    </div>
+
+                    <div class="absolute top-1/4 -right-10 w-20 h-20 hexagon bg-accent/30 floating-medium"></div>
+                    <div class="absolute bottom-1/3 -left-8 w-14 h-14 hexagon bg-midblue/50 floating-slow"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decorative elements -->
+        <div class="absolute top-40 left-10 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
+        <div class="absolute bottom-20 right-10 w-40 h-40 bg-midblue/20 rounded-full blur-2xl"></div>
+        <div class="absolute top-1/3 right-1/4 w-3 h-10 bg-accent/40 floating-medium"></div>
+        <div class="absolute bottom-1/4 left-1/3 w-6 h-6 rotate-45 bg-midblue/30 floating-slow"></div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="diagonal-bottom relative bg-darkblue/95 py-20">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+                    <span class="text-midblue">GAME</span> FEATURES
+                </h2>
+                <p class="text-white/70 max-w-2xl mx-auto text-lg">
+                    Dive into a rich tower defense experience with unique features that elevate your strategic gameplay
+                </p>
+                <div class="w-24 h-1 bg-accent mx-auto mt-6"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature Card 1 -->
+                <div class="relative bg-darkblue border border-midblue/30 rounded-lg overflow-hidden group hover:border-midblue transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-accent/10 rounded-full blur-xl group-hover:bg-accent/20 transition-all duration-300"></div>
+                    <div class="p-6 relative z-10">
+                        <div class="w-16 h-16 bg-midblue/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-midblue/30 transition-all duration-300">
+                            <i class="fas fa-route text-3xl text-midblue"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">Custom Maze Building</h3>
+                        <p class="text-white/70">
+                            Create your own maze layouts with free tower placement. No predefined slots — build your perfect defensive labyrinth!
+                        </p>
+                    </div>
+                    <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-midblue/0 via-midblue to-midblue/0"></div>
+                </div>
+
+                <!-- Feature Card 2 -->
+                <div class="relative bg-darkblue border border-midblue/30 rounded-lg overflow-hidden group hover:border-midblue transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-accent/10 rounded-full blur-xl group-hover:bg-accent/20 transition-all duration-300"></div>
+                    <div class="p-6 relative z-10">
+                        <div class="w-16 h-16 bg-midblue/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-midblue/30 transition-all duration-300">
+                            <i class="fas fa-chess-rook text-3xl text-midblue"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">20+ Unique Towers</h3>
+                        <p class="text-white/70">
+                            Deploy over 20 unique towers with distinct abilities and upgrade paths. Combine effects for maximum firepower!
+                        </p>
+                    </div>
+                    <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-midblue/0 via-midblue to-midblue/0"></div>
+                </div>
+
+                <!-- Feature Card 3 -->
+                <div class="relative bg-darkblue border border-midblue/30 rounded-lg overflow-hidden group hover:border-midblue transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-accent/10 rounded-full blur-xl group-hover:bg-accent/20 transition-all duration-300"></div>
+                    <div class="p-6 relative z-10">
+                        <div class="w-16 h-16 bg-midblue/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-midblue/30 transition-all duration-300">
+                            <i class="fas fa-magic text-3xl text-midblue"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">Powerful Spells</h3>
+                        <p class="text-white/70">
+                            Cast devastating spells with royal builders, each with unique powers to turn the tide of battle in your favor.
+                        </p>
+                    </div>
+                    <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-midblue/0 via-midblue to-midblue/0"></div>
+                </div>
+
+                <!-- Feature Card 4 -->
+                <div class="relative bg-darkblue border border-midblue/30 rounded-lg overflow-hidden group hover:border-midblue transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-accent/10 rounded-full blur-xl group-hover:bg-accent/20 transition-all duration-300"></div>
+                    <div class="p-6 relative z-10">
+                        <div class="w-16 h-16 bg-midblue/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-midblue/30 transition-all duration-300">
+                            <i class="fas fa-gem text-3xl text-midblue"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">Custom Rune Crafting</h3>
+                        <p class="text-white/70">
+                            Create special runes to enhance your towers with powerful effects and abilities, enabling unique strategies.
+                        </p>
+                    </div>
+                    <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-midblue/0 via-midblue to-midblue/0"></div>
+                </div>
+
+                <!-- Feature Card 5 -->
+                <div class="relative bg-darkblue border border-midblue/30 rounded-lg overflow-hidden group hover:border-midblue transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-accent/10 rounded-full blur-xl group-hover:bg-accent/20 transition-all duration-300"></div>
+                    <div class="p-6 relative z-10">
+                        <div class="w-16 h-16 bg-midblue/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-midblue/30 transition-all duration-300">
+                            <i class="fas fa-shield-alt text-3xl text-midblue"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">Play Offline</h3>
+                        <p class="text-white/70">
+                            Enjoy the full game experience without an internet connection. Perfect for gaming on the go!
+                        </p>
+                    </div>
+                    <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-midblue/0 via-midblue to-midblue/0"></div>
+                </div>
+
+                <!-- Feature Card 6 -->
+                <div class="relative bg-darkblue border border-midblue/30 rounded-lg overflow-hidden group hover:border-midblue transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-accent/10 rounded-full blur-xl group-hover:bg-accent/20 transition-all duration-300"></div>
+                    <div class="p-6 relative z-10">
+                        <div class="w-16 h-16 bg-midblue/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-midblue/30 transition-all duration-300">
+                            <i class="fas fa-trophy text-3xl text-midblue"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">Challenging Boss Levels</h3>
+                        <p class="text-white/70">
+                            Test your skills against epic boss levels and infinite TD challenges that will push your strategy to the limit.
+                        </p>
+                    </div>
+                    <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-midblue/0 via-midblue to-midblue/0"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decorative elements -->
+        <div class="absolute top-1/3 left-10 w-40 h-40 bg-accent/10 rounded-full blur-2xl"></div>
+        <div class="absolute bottom-1/4 right-10 w-32 h-32 bg-midblue/10 rounded-full blur-2xl"></div>
+        <div class="absolute top-1/4 right-1/3 w-4 h-4 bg-accent/60 rounded-full floating-medium"></div>
+        <div class="absolute bottom-1/3 left-1/4 w-3 h-8 bg-midblue/40 floating-slow"></div>
+    </section>
+
+    <!-- Gameplay Section -->
+    <section id="gameplay" class="relative bg-darkblue py-20">
+        <div class="absolute inset-0 maze-pattern opacity-30"></div>
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center gap-12">
+                <div class="md:w-1/2 order-2 md:order-1">
+                    <div class="relative">
+                        <div class="floating-tower relative bg-midblue/20 backdrop-blur-sm border-2 border-midblue/40 rounded-2xl p-6 glow">
+                            <div class="absolute -top-6 -left-6 w-12 h-12 bg-accent/30 rounded-full blur-xl"></div>
+                            <img src="/src/img/gameplay.png" alt="Maze Defenders Gameplay" class="rounded-lg shadow-lg w-full">
+
+                            <div class="absolute -bottom-5 left-0 right-0 mx-auto w-1/2 h-10 bg-darkblue/80 backdrop-blur-sm border border-midblue/40 rounded-lg flex items-center justify-center text-white">
+                                <i class="fas fa-gamepad text-midblue mr-2"></i>
+                                STRATEGIC GAMEPLAY
+                            </div>
+                        </div>
+
+                        <div class="absolute top-1/4 -left-5 w-10 h-10 hexagon bg-accent/40 floating-medium"></div>
+                        <div class="absolute bottom-1/3 -right-4 w-8 h-8 hexagon bg-midblue/50 floating-slow"></div>
+                    </div>
+                </div>
+
+                <div class="md:w-1/2 order-1 md:order-2">
+                    <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">
+                        <span class="text-midblue">STRATEGIC</span> GAMEPLAY
+                    </h2>
+                    <div class="w-24 h-1 bg-accent mb-8"></div>
+
+                    <div class="space-y-6">
+                        <div class="flex items-start">
+                            <div class="mr-4 mt-1 w-8 h-8 bg-midblue/30 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-puzzle-piece text-midblue"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-white mb-2">Complex Maze Building</h3>
+                                <p class="text-white/70">
+                                    Design intricate mazes to force enemies through lengthy paths, maximizing your towers' effectiveness. The labyrinth is your primary weapon!
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="mr-4 mt-1 w-8 h-8 bg-midblue/30 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-cogs text-midblue"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-white mb-2">Tower Synergies</h3>
+                                <p class="text-white/70">
+                                    Combine different towers to create powerful synergies. Slow enemies with ice towers, then blast them with fire for devastating combos.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="mr-4 mt-1 w-8 h-8 bg-midblue/30 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-tree text-midblue"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-white mb-2">Talent Trees</h3>
+                                <p class="text-white/70">
+                                    Customize towers with talent trees, creating unique specializations for different strategies and challenges.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="mr-4 mt-1 w-8 h-8 bg-midblue/30 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-hat-wizard text-midblue"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-white mb-2">Builder Powers</h3>
+                                <p class="text-white/70">
+                                    Deploy royal builders with unique abilities to cast spells, enhance towers, or directly damage enemies in times of need.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <a href="#download" class="trapezoid-button bg-accent text-white px-8 py-3 text-lg font-bold hover:bg-accent/90 inline-block">
+                            PLAY NOW <i class="fas fa-play ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decorative elements -->
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-midblue/0 via-midblue/30 to-midblue/0"></div>
+    </section>
+
+    <!-- World Section -->
+    <section id="world" class="relative bg-darkblue/90 py-20">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+                    <span class="text-midblue">3D FANTASY</span> WORLD
+                </h2>
+                <p class="text-white/70 max-w-2xl mx-auto text-lg">
+                    Journey through multiple fantasy worlds in your quest to save the kingdom from invaders
+                </p>
+                <div class="w-24 h-1 bg-accent mx-auto mt-6"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- World Card 1 -->
+                <div class="relative overflow-hidden rounded-xl group">
+                    <div class="absolute inset-0 bg-gradient-to-t from-darkblue to-transparent z-10"></div>
+                    <img src="/src/img/pic1.png" alt="Forest Realm" class="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
+                        <h3 class="text-xl font-bold text-white mb-2">Forest Realm</h3>
+                        <p class="text-white/80">Defend against orcs and goblins in lush forests</p>
+                        <div class="w-12 h-1 bg-midblue mt-3 transition-all duration-300 group-hover:w-24"></div>
+                    </div>
+                    <div class="absolute inset-0 border-2 border-midblue/0 rounded-xl transition-all duration-300 group-hover:border-midblue/50 z-20"></div>
+                </div>
+
+                <!-- World Card 2 -->
+                <div class="relative overflow-hidden rounded-xl group">
+                    <div class="absolute inset-0 bg-gradient-to-t from-darkblue to-transparent z-10"></div>
+                    <img src="/src/img/pic2.png" alt="Undead Crypts" class="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
+                        <h3 class="text-xl font-bold text-white mb-2">Undead Crypts</h3>
+                        <p class="text-white/80">Battle the undead in ancient crypts and catacombs</p>
+                        <div class="w-12 h-1 bg-midblue mt-3 transition-all duration-300 group-hover:w-24"></div>
+                    </div>
+                    <div class="absolute inset-0 border-2 border-midblue/0 rounded-xl transition-all duration-300 group-hover:border-midblue/50 z-20"></div>
+                </div>
+
+                <!-- World Card 3 -->
+                <div class="relative overflow-hidden rounded-xl group">
+
+
+                    <!-- World Card 3 -->
+                    <div class="relative overflow-hidden rounded-xl group">
+                        <div class="absolute inset-0 bg-gradient-to-t from-darkblue to-transparent z-10"></div>
+                        <img src="/src/img/pic3.png" alt="Volcanic Wastes" class="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
+                            <h3 class="text-xl font-bold text-white mb-2">Volcanic Wastes</h3>
+                            <p class="text-white/80">Repel demon hordes amidst lava and fire</p>
+                            <div class="w-12 h-1 bg-midblue mt-3 transition-all duration-300 group-hover:w-24"></div>
+                        </div>
+                        <div class="absolute inset-0 border-2 border-midblue/0 rounded-xl transition-all duration-300 group-hover:border-midblue/50 z-20"></div>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="mt-16 bg-darkblue/50 border border-midblue/30 rounded-xl p-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-accent/10 rounded-full blur-3xl"></div>
+                <div class="absolute bottom-0 left-0 w-32 h-32 bg-midblue/20 rounded-full blur-2xl"></div>
+
+                <div class="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                    <div class="md:w-2/3">
+                        <h3 class="text-2xl font-bold text-white mb-4">Epic Boss Battles</h3>
+                        <p class="text-white/80 mb-6">
+                            Face off against powerful bosses with unique abilities that will test your strategic prowess. Each boss requires specific tactics and tower combinations to defeat, adding an exciting challenge to your defensive gameplay.
+                        </p>
+                        <div class="flex flex-wrap gap-4">
+                            <div class="bg-midblue/20 border border-midblue/40 rounded-lg px-4 py-2 text-white">
+                                <i class="fas fa-skull text-accent mr-2"></i> Unique Boss Mechanics
+                            </div>
+                            <div class="bg-midblue/20 border border-midblue/40 rounded-lg px-4 py-2 text-white">
+                                <i class="fas fa-shield-alt text-accent mr-2"></i> Special Defenses Required
+                            </div>
+                            <div class="bg-midblue/20 border border-midblue/40 rounded-lg px-4 py-2 text-white">
+                                <i class="fas fa-crown text-accent mr-2"></i> Epic Rewards
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="md:w-3/3">
+                        <div class="floating-tower relative">
+                            <div class="hexagon bg-midblue/30 p-1">
+                                <div class="hexagon bg-darkblue/80 p-4">
+                                    <img src="/src/img/pic4.png" alt="Boss Battle" class="w-full h-auto">
+                                </div>
+                            </div>
+                            <div class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-accent/70 flex items-center justify-center text-white text-xs font-bold">
+                                BOSS
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Decorative elements -->
+            <div class="absolute top-1/3 left-5 w-3 h-10 bg-accent/40 floating-medium"></div>
+            <div class="absolute bottom-1/4 right-10 w-6 h-6 rotate-45 bg-midblue/30 floating-slow"></div>
+            <div class="absolute top-2/3 right-1/4 w-4 h-4 bg-accent/60 rounded-full floating-medium"></div>
+    </section>
+
+    <!-- Reviews Section -->
+    <section id="reviews" class="relative bg-darkblue py-20 overflow-hidden">
+        <div class="absolute inset-0 maze-pattern opacity-20"></div>
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+                    <span class="text-midblue">PLAYER</span> REVIEWS
+                </h2>
+                <p class="text-white/70 max-w-2xl mx-auto text-lg">
+                    Join over 50,000 players who have experienced Maze Defenders
+                </p>
+                <div class="w-24 h-1 bg-accent mx-auto mt-6"></div>
+
+                <div class="mt-8 flex items-center justify-center">
+                    <div class="flex items-center">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="far fa-star text-yellow-400"></i>
+                    </div>
+                    <span class="ml-2 text-white font-bold text-xl">4.0</span>
+                    <span class="mx-2 text-white/50">|</span>
+                    <span class="text-white/80">1,300+ Reviews</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Review Card 1 -->
+                <div class="bg-darkblue/70 border border-midblue/30 rounded-xl p-6 relative overflow-hidden group hover:border-midblue/60 transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-accent/10 rounded-full blur-xl group-hover:bg-accent/20 transition-all duration-300"></div>
+
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-midblue/40 flex items-center justify-center text-white font-bold mr-3">
+                            S
+                        </div>
+                        <div>
+                            <h3 class="text-white font-semibold">StratMaster88</h3>
+                            <div class="flex text-yellow-400 text-sm">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-white/80 mb-4">
+                        "The freedom to create your own maze is a game-changer! I've tried many TD games, but the combination of custom mazes and tower synergies makes this one special. Can't stop playing!"
+                    </p>
+
+                    <div class="text-midblue text-sm">2 months ago</div>
+                </div>
+
+                <!-- Review Card 2 -->
+                <div class="bg-darkblue/70 border border-midblue/30 rounded-xl p-6 relative overflow-hidden group hover:border-midblue/60 transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-accent/10 rounded-full blur-xl group-hover:bg-accent/20 transition-all duration-300"></div>
+
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-midblue/40 flex items-center justify-center text-white font-bold mr-3">
+                            T
+                        </div>
+                        <div>
+                            <h3 class="text-white font-semibold">TowerTactician</h3>
+                            <div class="flex text-yellow-400 text-sm">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="far fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-white/80 mb-4">
+                        "Love the rune system and talent trees! Every tower can be customized in so many ways. The boss battles are challenging and require real strategy. Great offline game for my commute."
+                    </p>
+
+                    <div class="text-midblue text-sm">1 month ago</div>
+                </div>
+
+                <!-- Review Card 3 -->
+                <div class="bg-darkblue/70 border border-midblue/30 rounded-xl p-6 relative overflow-hidden group hover:border-midblue/60 transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-accent/10 rounded-full blur-xl group-hover:bg-accent/20 transition-all duration-300"></div>
+
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-midblue/40 flex items-center justify-center text-white font-bold mr-3">
+                            D
+                        </div>
+                        <div>
+                            <h3 class="text-white font-semibold">DefenderPro</h3>
+                            <div class="flex text-yellow-400 text-sm">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="far fa-star"></i>
+                                <i class="far fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-white/80 mb-4">
+                        "Solid TD game with a unique twist on maze building. The 3D graphics are nice and the variety of towers is impressive. Would like to see more maps, but the devs seem to update regularly."
+                    </p>
+
+                    <div class="text-midblue text-sm">3 months ago</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decorative elements -->
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-midblue/0 via-midblue/40 to-midblue/0"></div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download" class="relative bg-darkblue py-20">
+        <div class="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-accent/5 to-transparent"></div>
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="bg-darkblue/80 border-2 border-midblue/50 rounded-2xl p-8 md:p-12 backdrop-blur-sm glow">
+                <div class="flex flex-col md:flex-row items-center gap-10">
+                    <div class="md:w-2/3">
+                        <h2 class="text-3xl md:text-5xl font-bold text-white mb-6">
+                            Ready to <span class="text-midblue">Defend</span> the Kingdom?
+                        </h2>
+                        <p class="text-white/80 text-lg mb-8">
+                            Download Maze Defenders today and embark on an epic tower defense adventure. Create intricate mazes, deploy powerful towers, and save the realm from invasion!
+                        </p>
+
+                        <div class="flex flex-wrap gap-4">
+                            <a href="https://play.google.com/store/apps/details?id=com.mobile.defense.gears&pcampaignid=web_share" target="_blank" class="trapezoid-button bg-accent text-white px-8 py-4 text-lg font-bold flex items-center">
+                                <i class="fab fa-google-play text-2xl mr-3"></i>
+                                <div>
+                                    <div class="text-xs">GET IT ON</div>
+                                    <div>Google Play</div>
+                                </div>
+                            </a>
+
+                        </div>
+
+                        <div class="mt-8 flex flex-wrap gap-6">
+                            <div class="flex items-center">
+                                <i class="fas fa-gamepad text-midblue text-xl mr-2"></i>
+                                <span class="text-white">Strategy</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-chess-rook text-midblue text-xl mr-2"></i>
+                                <span class="text-white">Tower Defense</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-user text-midblue text-xl mr-2"></i>
+                                <span class="text-white">Single Player</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-wifi-slash text-midblue text-xl mr-2"></i>
+                                <span class="text-white">Offline</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="md:w-1/3 relative">
+                        <div class="floating-tower">
+                            <img src="/src/img/download.png" alt="Maze Defenders Game" class="rounded-2xl border-2 border-midblue/50 glow">
+                        </div>
+                        <div class="absolute -top-5 -right-5 w-16 h-16 bg-accent/30 rounded-full blur-xl"></div>
+                        <div class="absolute -bottom-5 -left-5 w-20 h-20 bg-midblue/40 rounded-full blur-xl"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-16">
+                <h3 class="text-2xl font-bold text-white mb-6">
+                    For Players <span class="text-midblue">7+</span> Years Old
+                </h3>
+                <div class="flex flex-wrap items-center justify-center gap-8">
+                    <div class="bg-darkblue/50 border border-midblue/30 rounded-lg p-4 flex flex-col items-center">
+                        <i class="fas fa-star text-yellow-400 text-3xl mb-2"></i>
+                        <div class="text-white font-bold text-xl">4.0</div>
+                        <div class="text-white/70 text-sm">Average Rating</div>
+                    </div>
+
+                    <div class="bg-darkblue/50 border border-midblue/30 rounded-lg p-4 flex flex-col items-center">
+                        <i class="fas fa-download text-midblue text-3xl mb-2"></i>
+                        <div class="text-white font-bold text-xl">50K+</div>
+                        <div class="text-white/70 text-sm">Downloads</div>
+                    </div>
+
+                    <div class="bg-darkblue/50 border border-midblue/30 rounded-lg p-4 flex flex-col items-center">
+                        <i class="fas fa-comment text-midblue text-3xl mb-2"></i>
+                        <div class="text-white font-bold text-xl">1,300+</div>
+                        <div class="text-white/70 text-sm">Reviews</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decorative elements -->
+        <div class="absolute top-1/3 left-10 w-3 h-10 bg-accent/40 floating-medium"></div>
+        <div class="absolute bottom-1/4 right-10 w-6 h-6 rotate-45 bg-midblue/30 floating-slow"></div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative bg-darkblue/90 pt-16 pb-8 border-t border-midblue/30">
+        <div class="absolute inset-0 maze-pattern opacity-10"></div>
+        <div class="container mx-auto px-4 relative z-10">
+
+
+            <div class="border-t border-midblue/30 pt-6 mt-6 flex flex-col md:flex-row justify-between items-center">
+                <div class="text-white/60 text-sm mb-4 md:mb-0">
+                    &copy; 2025 Tower Tactician. All rights reserved.
+                </div>
+
+                <div class="flex items-center space-x-2 text-white/60 text-sm">
+                    <a href="/poliprivacy725/" class="hover:text-white transition-colors duration-300">Privacy</a>
+                    <span>•</span>
+                    <a href="/service2465/" class="hover:text-white transition-colors duration-300">Terms</a>
+                    <span>•</span>
+                    <a href="/cookiess367/" class="hover:text-white transition-colors duration-300">Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for particles and animations -->
+    <script>
+        // Create red floating particles
+        function createParticles() {
+            const particlesContainer = document.querySelector('.particles');
+            const particleCount = 30;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('red-particle');
+
+                // Random position
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+
+                // Random size
+                const size = Math.random() * 6 + 2;
+
+                // Set styles
+                particle.style.left = `${posX}%`;
+                particle.style.top = `${posY}%`;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.opacity = Math.random() * 0.5 + 0.1;
+
+                // Animation
+                const duration = Math.random() * 20 + 10;
+                particle.style.animation = `float ${duration}s ease-in-out infinite`;
+                particle.style.animationDelay = `-${Math.random() * 10}s`;
+
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Initialize particles
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+
+            // Smooth scroll for navigation
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
+
+
+<?php
+$cookieConsentHtml = '
+<style>
+.cookie-consent {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgba(5, 8, 20, 0.95); /* Changed to match the darkblue color */
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -2px 15px rgba(2, 79, 148, 0.4); /* Shadow with midblue color */
+    width: 100%;
+    transform: translateY(100%);
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cookie-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    position: relative;
+}
+
+.cookie-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        to right,
+        rgba(2, 79, 148, 0.1), /* Gradient with midblue color */
+        rgba(255, 255, 255, 0.05)
+    );
+    pointer-events: none;
+}
+
+.cookie-content {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.cookie-title {
+    font-size: 1.2rem;
+    color: #ffffff; 
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-right: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: "Orbitron", sans-serif; /* Changed to match the website font */
+}
+
+.cookie-title i {
+    color: #024f94; /* Icon in midblue color */
+    font-size: 1.5rem;
+}
+
+.cookie-text {
+    color: rgba(255, 255, 255, 0.8); /* Text color matching website */
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.5;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.cookie-link {
+    color: #024f94; /* Links in midblue color */
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.cookie-link::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: #024f94; /* Underline in midblue */
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.cookie-link:hover::after {
+    transform: scaleX(1);
+}
+
+.cookie-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.cookie-button-reject,
+.cookie-button-accept {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    font-family: "Orbitron", sans-serif;
+    /* Trapezoid buttons like on the site */
+    clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+}
+
+.cookie-button-reject {
+    background: transparent;
+    border: 2px solid #024f94; /* Border with midblue color */
+    color: #ffffff;
+}
+
+.cookie-button-reject:hover {
+    background: rgba(2, 79, 148, 0.2); /* Hover with midblue color */
+    border-color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.cookie-button-accept {
+    background: #e53935; /* Red accent color from the site */
+    color: #ffffff;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cookie-button-accept::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: all 0.6s;
+}
+
+.cookie-button-accept:hover {
+    background: rgba(229, 57, 53, 0.9); /* Lighter red on hover */
+    transform: translateY(-2px) scale(1.05);
+}
+
+.cookie-button-accept:hover::before {
+    left: 100%;
+}
+
+@media (max-width: 768px) {
+    .cookie-container {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .cookie-content {
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .cookie-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .cookie-button-reject,
+    .cookie-button-accept {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .cookie-title {
+        margin-right: 0;
+        justify-content: center;
+    }
+}
+</style>
+<div id="cookieConsent" class="cookie-consent">
+    <div class="cookie-container">
+        <div class="cookie-content">
+            <h3 class="cookie-title">
+                <i class="fas fa-cookie-bite"></i>
+                Cookie Policy
+            </h3>
+            <p class="cookie-text ">
+                At Tower Tactician we use cookies to improve your gaming experience. By continuing to use our website, you accept our use of cookies. For more information, please read our
+                <a href="/poliprivacy725/" class="cookie-link">Privacy Policy</a>,
+                the
+                <a href="/service2465/" class="cookie-link">Terms of Service</a>
+                and the
+                <a href="/cookiess367/" class="cookie-link">Cookie Policy</a>.
+            </p>
+        </div>
+        
+        <div class="cookie-buttons">
+            <button id="rejectCookies" class="cookie-button-reject">
+                Decline
+            </button>
+            <button id="acceptCookies" class="cookie-button-accept">
+                Accept
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+   const cookieConsent = document.getElementById("cookieConsent");
+   const acceptBtn = document.getElementById("acceptCookies");
+   const rejectBtn = document.getElementById("rejectCookies");
+   
+   if (!getCookie("aprenderd_cookie_consent")) {
+       setTimeout(() => {
+           cookieConsent.style.transform = "translateY(0)";
+       }, 1000);
+   }
+
+   function getCookie(name) {
+       let matches = document.cookie.match(new RegExp(
+           "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, "\\$1") + "=([^;]*)"
+       ));
+       return matches ? decodeURIComponent(matches[1]) : undefined;
+   }
+   
+   function setCookie(name, value, days) {
+       const date = new Date();
+       date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+       const expires = "; expires=" + date.toUTCString();
+       document.cookie = name + "=" + value + expires + "; path=/; SameSite=Strict; Secure";
+   }
+
+   function handleConsent(consent) {
+       setCookie("aprenderd_cookie_consent", consent, 365);
+       cookieConsent.style.transform = "translateY(100%)";
+       
+       setTimeout(() => {
+           cookieConsent.remove();
+       }, 500);
+   }
+
+   acceptBtn.addEventListener("click", () => handleConsent("accepted"));
+   rejectBtn.addEventListener("click", () => handleConsent("rejected"));
+});
+</script>
+';
+
+if (!isset($_COOKIE["aprenderd_cookie_consent"])) {
+    echo $cookieConsentHtml;
+}
+?>

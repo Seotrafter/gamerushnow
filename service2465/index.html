@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower Tactician - Maze Defenders</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel='icon' href='/src/icons/logo.png' type='image/x-icon'>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkblue: '#050814',
+                        midblue: '#024f94',
+                        accent: '#e53935',
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'wiggle': 'wiggle 1s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': {
+                                transform: 'translateY(0)'
+                            },
+                            '50%': {
+                                transform: 'translateY(-10px)'
+                            },
+                        },
+                        wiggle: {
+                            '0%, 100%': {
+                                transform: 'rotate(-3deg)'
+                            },
+                            '50%': {
+                                transform: 'rotate(3deg)'
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #050814;
+            scroll-behavior: smooth;
+        }
+
+        .trapezoid-button {
+            clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+            transition: all 0.3s ease;
+        }
+
+        .trapezoid-button:hover {
+            transform: scale(1.05);
+        }
+
+        .maze-pattern {
+            background-image:
+                linear-gradient(rgba(2, 79, 148, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(2, 79, 148, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .glow {
+            box-shadow: 0 0 15px rgba(2, 79, 148, 0.7);
+        }
+
+        .hero-diagonal {
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+        }
+
+        .diagonal-bottom {
+            clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
+        }
+
+        .floating-tower {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .floating-slow {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-medium {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .red-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(229, 57, 53, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hexagon {
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+
+        .maze-pattern {
+            background-image:
+                linear-gradient(rgba(2, 79, 148, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(2, 79, 148, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .glow {
+            box-shadow: 0 0 15px rgba(2, 79, 148, 0.7);
+        }
+
+        .trapezoid-button {
+            clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+            transition: all 0.3s ease;
+        }
+
+        .trapezoid-button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Animation classes */
+        .floating-medium {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .floating-slow {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Red floating particles background effect -->
+    <div class="particles fixed top-0 left-0 w-full h-full pointer-events-none z-0"></div>
+
+    <!-- Header -->
+    <header class=" top-0 w-full z-50 bg-darkblue/80 backdrop-blur-md border-b border-midblue/40">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <a href="/" class="flex items-center mb-4 md:mb-0">
+                    <div class="bg-midblue p-2 rounded-full glow mr-3">
+                        <div class="w-10 h-10 text-white flex items-center justify-center">
+                            <i class="fas fa-chess-rook text-2xl"></i>
+                        </div>
+                    </div>
+                    <h1 class="text-white text-xl md:text-2xl font-bold tracking-wider">TOWER TACTICIAN</h1>
+                </a>
+
+                <nav class="flex flex-wrap justify-center gap-2 md:gap-4">
+                    <a href="/#features" class="trapezoid-button bg-midblue text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-midblue/80">
+                        FEATURES
+                    </a>
+                    <a href="/#gameplay" class="trapezoid-button bg-midblue text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-midblue/80">
+                        GAMEPLAY
+                    </a>
+                    <a href="/#world" class="trapezoid-button bg-midblue text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-midblue/80">
+                        WORLD
+                    </a>
+                    <a href="/#reviews" class="trapezoid-button bg-midblue text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-midblue/80">
+                        REVIEWS
+                    </a>
+                    <a href="/#download" class="trapezoid-button bg-accent text-white px-6 py-2 font-medium text-sm md:text-base hover:bg-accent/90">
+                        DOWNLOAD
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+    <!-- Terms Header Section -->
+    <section class="relative bg-darkblue pt-32 pb-16 overflow-hidden maze-pattern">
+        <div class="absolute top-40 left-10 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
+        <div class="absolute bottom-20 right-10 w-40 h-40 bg-midblue/20 rounded-full blur-2xl"></div>
+
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold text-white leading-tight">
+                    <span class="text-midblue">TERMS</span> AND CONDITIONS
+                </h1>
+                <div class="w-24 h-1 bg-accent mx-auto mt-6"></div>
+                <p class="text-white/70 max-w-2xl mx-auto mt-6 text-lg">
+                    Welcome to TOWER TACTICIAN! Please read these terms carefully before using our services.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Introduction Section -->
+    <section class="relative bg-darkblue/95 py-12">
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 mb-12 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-accent/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6">
+                    Welcome to <span class="text-midblue">TOWER TACTICIAN</span>!
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    These terms and conditions outline the rules and regulations for the use of TOWER TACTICIAN's Website, located at https://gamerushnow.com/.
+                </p>
+
+                <p class="text-white/80 mb-6">
+                    By accessing this website, we assume you accept these terms and conditions. Do not continue to use TOWER TACTICIAN if you do not agree to take all of the terms and conditions stated on this page.
+                </p>
+
+                <div class="bg-midblue/10 border border-midblue/30 rounded-lg p-5 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-midblue mt-1 mr-3 text-xl"></i>
+                        <div>
+                            <h4 class="text-white font-bold mb-2">Important Notice</h4>
+                            <p class="text-white/80">
+                                The following terminology applies to these Terms and Conditions, Privacy Statement, and Disclaimer Notice and all Agreements: "Client", "You", and "Your" refer to you, the person logging on to this website and compliant with the Company's terms and conditions. "The Company", "Ourselves", "We", "Our", and "Us", refer to our Company. "Party", "Parties", or "Us", refer to both the Client and ourselves. All terms refer to the offer, acceptance, and consideration of payment necessary to undertake the process of our assistance to the Client in the most appropriate manner for the express purpose of meeting the Client's needs in respect of the provision of the Company's stated services, in accordance with and subject to the prevailing law of the Netherlands. Any use of the above terminology or other words in the singular, plural, capitalization, and/or he/she or they, are taken as interchangeable and therefore as referring to the same.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cookies Section -->
+    <section class="relative bg-darkblue/90 py-12">
+        <div class="absolute inset-0 maze-pattern opacity-10"></div>
+        <div class="absolute top-20 right-10 w-3 h-10 bg-accent/40 floating-medium"></div>
+
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 mb-12 relative overflow-hidden">
+                <div class="absolute bottom-0 left-0 w-40 h-40 bg-midblue/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-cookie-bite text-midblue mr-3"></i> Cookies
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    We employ the use of cookies. By accessing TOWER TACTICIAN, you agreed to use cookies in agreement with the TOWER TACTICIAN's Privacy Policy.
+                </p>
+
+                <p class="text-white/80 mb-6">
+                    Most interactive websites use cookies to retrieve the user's details for each visit. Cookies are used by our website to enable the functionality of certain areas to make it easier for people visiting our website. Some of our affiliate/advertising partners may also use cookies.
+                </p>
+
+                <div class="flex flex-wrap gap-4 my-8">
+                    <a href="/cookiess367/" class="trapezoid-button bg-midblue/20 border border-midblue/50 px-6 py-3 text-white hover:bg-midblue/30 transition-all duration-300 inline-flex items-center">
+                        <i class="fas fa-cookie mr-2"></i> Cookie Policy
+                    </a>
+                    <a href="/poliprivacy725/" class="trapezoid-button bg-midblue/20 border border-midblue/50 px-6 py-3 text-white hover:bg-midblue/30 transition-all duration-300 inline-flex items-center">
+                        <i class="fas fa-shield-alt mr-2"></i> Privacy Policy
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- License Section -->
+    <section class="relative bg-darkblue/95 py-12">
+        <div class="absolute inset-0 maze-pattern opacity-5"></div>
+        <div class="absolute bottom-40 left-20 w-6 h-6 rotate-45 bg-midblue/30 floating-slow"></div>
+
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 mb-12 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-40 h-40 bg-accent/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-copyright text-midblue mr-3"></i> License
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    Unless otherwise stated, TOWER TACTICIAN and/or its licensors own the intellectual property rights for all material on TOWER TACTICIAN. All intellectual property rights are reserved. You may access this from TOWER TACTICIAN for your own personal use subject to restrictions set in these terms and conditions.
+                </p>
+
+                <div class="bg-accent/10 border border-accent/30 rounded-lg p-5 mb-6">
+                    <h4 class="text-white font-bold mb-3">You must not:</h4>
+                    <ul class="space-y-2 text-white/80 list-inside">
+                        <li class="flex items-start">
+                            <i class="fas fa-times text-accent mt-1 mr-3"></i>
+                            <span>Republish material from TOWER TACTICIAN</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-times text-accent mt-1 mr-3"></i>
+                            <span>Sell, rent, or sub-license material from TOWER TACTICIAN</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-times text-accent mt-1 mr-3"></i>
+                            <span>Reproduce, duplicate, or copy material from TOWER TACTICIAN</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-times text-accent mt-1 mr-3"></i>
+                            <span>Redistribute content from TOWER TACTICIAN</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <p class="text-white/80 mb-4">
+                    This Agreement shall begin on the date hereof.
+                </p>
+
+                <p class="text-white/80 mb-6">
+                    Parts of this website offer an opportunity for users to post and exchange opinions and information in certain areas of the website. TOWER TACTICIAN does not filter, edit, publish or review Comments prior to their presence on the website. Comments do not reflect the views and opinions of TOWER TACTICIAN, its agents, and/or affiliates. Comments reflect the views and opinions of the person who posts their views and opinions. To the extent permitted by applicable laws, TOWER TACTICIAN shall not be liable for the Comments or for any liability, damages, or expenses caused and/or suffered as a result of any use of and/or posting of and/or appearance of the Comments on this website.
+                </p>
+
+                <p class="text-white/80 mb-6">
+                    TOWER TACTICIAN reserves the right to monitor all Comments and to remove any Comments that can be considered inappropriate, offensive, or cause a breach of these Terms and Conditions.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- User Warranties Section -->
+    <section class="relative bg-darkblue/90 py-12">
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 mb-12 relative overflow-hidden">
+                <div class="absolute bottom-0 right-0 w-40 h-40 bg-midblue/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-user-shield text-midblue mr-3"></i> User Warranties
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    You warrant and represent that:
+                </p>
+
+                <div class="space-y-4 mb-8">
+                    <div class="bg-midblue/10 border-l-4 border-midblue rounded-r-lg p-4">
+                        <p class="text-white/80">
+                            You are entitled to post the Comments on our website and have all necessary licenses and consents to do so;
+                        </p>
+                    </div>
+
+                    <div class="bg-midblue/10 border-l-4 border-midblue rounded-r-lg p-4">
+                        <p class="text-white/80">
+                            The Comments do not invade any intellectual property right, including without limitation copyright, patent, or trademark of any third party;
+                        </p>
+                    </div>
+
+                    <div class="bg-midblue/10 border-l-4 border-midblue rounded-r-lg p-4">
+                        <p class="text-white/80">
+                            The Comments do not contain any defamatory, libelous, offensive, indecent, or otherwise unlawful material which is an invasion of privacy;
+                        </p>
+                    </div>
+
+                    <div class="bg-midblue/10 border-l-4 border-midblue rounded-r-lg p-4">
+                        <p class="text-white/80">
+                            The Comments will not be used to solicit or promote business or custom or present commercial activities or unlawful activity.
+                        </p>
+                    </div>
+                </div>
+
+                <p class="text-white/80 mb-4">
+                    You hereby grant TOWER TACTICIAN a non-exclusive license to use, reproduce, edit and authorize others to use, reproduce, and edit any of your Comments in any and all forms, formats, or media.
+                </p>
+            </div>
+        </div>
+    </section>
+    <!-- Hyperlinking Section -->
+    <section class="relative bg-darkblue/95 py-12">
+        <div class="absolute inset-0 maze-pattern opacity-5"></div>
+        <div class="absolute top-40 right-20 w-4 h-4 bg-accent/60 rounded-full floating-medium"></div>
+
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 mb-12 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-accent/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-link text-midblue mr-3"></i> Hyperlinking to our Content
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    The following organizations may link to our Website without prior written approval:
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <div class="bg-midblue/10 border border-midblue/30 rounded-lg p-4 flex items-center">
+                        <i class="fas fa-building text-midblue mr-3"></i>
+                        <span class="text-white/80">Government agencies</span>
+                    </div>
+
+                    <div class="bg-midblue/10 border border-midblue/30 rounded-lg p-4 flex items-center">
+                        <i class="fas fa-search text-midblue mr-3"></i>
+                        <span class="text-white/80">Search engines</span>
+                    </div>
+
+                    <div class="bg-midblue/10 border border-midblue/30 rounded-lg p-4 flex items-center">
+                        <i class="fas fa-newspaper text-midblue mr-3"></i>
+                        <span class="text-white/80">News organizations</span>
+                    </div>
+
+                    <div class="bg-midblue/10 border border-midblue/30 rounded-lg p-4 flex items-center">
+                        <i class="fas fa-folder-open text-midblue mr-3"></i>
+                        <span class="text-white/80">Online directory distributors</span>
+                    </div>
+                </div>
+
+                <p class="text-white/80 mb-6">
+                    Online directory distributors may link to our Website in the same manner as they hyperlink to the Websites of other listed businesses; and System-wide Accredited Businesses except soliciting non-profit organizations, charity shopping malls, and charity fundraising groups which may not hyperlink to our Website.
+                </p>
+
+                <p class="text-white/80 mb-6">
+                    These organizations may link to our home page, to publications, or to other Website information so long as the link: (a) is not in any way deceptive; (b) does not falsely imply sponsorship, endorsement, or approval of the linking party and its products and/or services; and (c) fits within the context of the linking party's site.
+                </p>
+
+                <div class="w-full h-px bg-midblue/30 my-8"></div>
+
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                    <i class="fas fa-window-maximize text-midblue mr-3"></i> iFrames
+                </h3>
+
+                <p class="text-white/80 mb-4">
+                    Without prior approval and written permission, you may not create frames around our Web pages that alter in any way the visual presentation or appearance of our Website.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Content Liability Section -->
+    <section class="relative bg-darkblue/90 py-12">
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 mb-12 relative overflow-hidden">
+                <div class="absolute bottom-0 left-0 w-40 h-40 bg-midblue/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-exclamation-triangle text-midblue mr-3"></i> Content Liability
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    We shall not be held responsible for any content that appears on your Website. You agree to protect and defend us against all claims that arise on your Website. No link(s) should appear on any Website that may be interpreted as libelous, obscene, or criminal, or which infringes, otherwise violates, or advocates the infringement or other violation of, any third-party rights.
+                </p>
+
+                <div class="w-full h-px bg-midblue/30 my-8"></div>
+
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                    <i class="fas fa-gavel text-midblue mr-3"></i> Reservation of Rights
+                </h3>
+
+                <p class="text-white/80 mb-6">
+                    We reserve the right to request that you remove all links or any particular link to our Website. You approve to immediately remove all links to our Website upon request. We also reserve the right to amend these terms and conditions and our linking policy at any time. By continuously linking to our Website, you agree to be bound to and follow these linking terms and conditions.
+                </p>
+
+                <div class="w-full h-px bg-midblue/30 my-8"></div>
+
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                    <i class="fas fa-unlink text-midblue mr-3"></i> Removal of links from our website
+                </h3>
+
+                <p class="text-white/80 mb-4">
+                    If you find any link on our Website that is offensive for any reason, you are free to contact and inform us at any moment. We will consider requests to remove links, but we are not obligated to do so or to respond to you directly.
+                </p>
+            </div>
+        </div>
+    </section>
+    <!-- Disclaimer Section -->
+    <section class="relative bg-darkblue/95 py-12">
+        <div class="absolute inset-0 maze-pattern opacity-5"></div>
+        <div class="absolute bottom-40 left-20 w-6 h-6 rotate-45 bg-midblue/30 floating-slow"></div>
+
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 mb-12 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-40 h-40 bg-accent/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-exclamation-circle text-midblue mr-3"></i> Disclaimer
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    To the maximum extent permitted by applicable law, we exclude all representations, warranties, and conditions relating to our website and the use of this website. Nothing in this disclaimer will:
+                </p>
+
+                <div class="space-y-4 mb-8">
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 rounded-full bg-midblue/30 flex items-center justify-center mr-4 mt-1">
+                            <i class="fas fa-user-shield text-white"></i>
+                        </div>
+                        <p class="text-white/80">
+                            Limit or exclude our or your liability for death or personal injury;
+                        </p>
+                    </div>
+
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 rounded-full bg-midblue/30 flex items-center justify-center mr-4 mt-1">
+                            <i class="fas fa-ban text-white"></i>
+                        </div>
+                        <p class="text-white/80">
+                            Limit or exclude our or your liability for fraud or fraudulent misrepresentation;
+                        </p>
+                    </div>
+
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 rounded-full bg-midblue/30 flex items-center justify-center mr-4 mt-1">
+                            <i class="fas fa-balance-scale text-white"></i>
+                        </div>
+                        <p class="text-white/80">
+                            Limit any of our or your liabilities in any way that is not permitted under applicable law; or
+                        </p>
+                    </div>
+
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 rounded-full bg-midblue/30 flex items-center justify-center mr-4 mt-1">
+                            <i class="fas fa-gavel text-white"></i>
+                        </div>
+                        <p class="text-white/80">
+                            Exclude any of our or your liabilities that may not be excluded under applicable law.
+                        </p>
+                    </div>
+                </div>
+
+                <p class="text-white/80 mb-6">
+                    The limitations and prohibitions of liability set in this Section and elsewhere in this disclaimer: (a) are subject to the preceding paragraph; and (b) govern all liabilities arising under the disclaimer, including liabilities arising in contract, in tort, and for breach of statutory duty.
+                </p>
+
+                <p class="text-white/80 mb-6">
+                    As long as the website and the information and services on the website are provided free of charge, we will not be liable for any loss or damage of any nature.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="relative bg-darkblue/90 py-12 pb-20">
+        <div class="container mx-auto px-4">
+            <div class="bg-darkblue/80 border border-midblue/30 rounded-xl p-8 relative overflow-hidden">
+                <div class="absolute bottom-0 right-0 w-40 h-40 bg-midblue/5 rounded-full blur-3xl"></div>
+
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fas fa-headset text-midblue mr-3"></i> Questions About Our Terms?
+                </h2>
+
+                <p class="text-white/80 mb-6">
+                    If you have any questions about these Terms and Conditions, please contact us.
+                </p>
+
+                <div class="flex flex-wrap gap-6 mt-10">
+                    <a href="/" class="trapezoid-button bg-midblue text-white px-8 py-3 text-lg font-bold hover:bg-midblue/80 transition-all duration-300 inline-flex items-center">
+                        <i class="fas fa-home mr-2"></i> Return to Home
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom decoration -->
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-midblue/0 via-midblue/40 to-midblue/0"></div>
+    </section>
+
+
+    <!-- Footer -->
+    <footer class="relative bg-darkblue/90 pt-16 pb-8 border-t border-midblue/30">
+        <div class="absolute inset-0 maze-pattern opacity-10"></div>
+        <div class="container mx-auto px-4 relative z-10">
+
+
+            <div class="border-t border-midblue/30 pt-6 mt-6 flex flex-col md:flex-row justify-between items-center">
+                <div class="text-white/60 text-sm mb-4 md:mb-0">
+                    &copy; 2025 Tower Tactician. All rights reserved.
+                </div>
+
+                <div class="flex items-center space-x-2 text-white/60 text-sm">
+                    <a href="/poliprivacy725/" class="hover:text-white transition-colors duration-300">Privacy</a>
+                    <span>•</span>
+                    <a href="/service2465/" class="hover:text-white transition-colors duration-300">Terms</a>
+                    <span>•</span>
+                    <a href="/cookiess367/" class="hover:text-white transition-colors duration-300">Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for particles and animations -->
+    <script>
+        // Create red floating particles
+        function createParticles() {
+            const particlesContainer = document.querySelector('.particles');
+            const particleCount = 30;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('red-particle');
+
+                // Random position
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+
+                // Random size
+                const size = Math.random() * 6 + 2;
+
+                // Set styles
+                particle.style.left = `${posX}%`;
+                particle.style.top = `${posY}%`;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.opacity = Math.random() * 0.5 + 0.1;
+
+                // Animation
+                const duration = Math.random() * 20 + 10;
+                particle.style.animation = `float ${duration}s ease-in-out infinite`;
+                particle.style.animationDelay = `-${Math.random() * 10}s`;
+
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Initialize particles
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+
+            // Smooth scroll for navigation
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
+
+
+<?php
+$cookieConsentHtml = '
+<style>
+.cookie-consent {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgba(5, 8, 20, 0.95); /* Changed to match the darkblue color */
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -2px 15px rgba(2, 79, 148, 0.4); /* Shadow with midblue color */
+    width: 100%;
+    transform: translateY(100%);
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cookie-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    position: relative;
+}
+
+.cookie-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        to right,
+        rgba(2, 79, 148, 0.1), /* Gradient with midblue color */
+        rgba(255, 255, 255, 0.05)
+    );
+    pointer-events: none;
+}
+
+.cookie-content {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.cookie-title {
+    font-size: 1.2rem;
+    color: #ffffff; 
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-right: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: "Orbitron", sans-serif; /* Changed to match the website font */
+}
+
+.cookie-title i {
+    color: #024f94; /* Icon in midblue color */
+    font-size: 1.5rem;
+}
+
+.cookie-text {
+    color: rgba(255, 255, 255, 0.8); /* Text color matching website */
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.5;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.cookie-link {
+    color: #024f94; /* Links in midblue color */
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.cookie-link::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: #024f94; /* Underline in midblue */
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.cookie-link:hover::after {
+    transform: scaleX(1);
+}
+
+.cookie-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.cookie-button-reject,
+.cookie-button-accept {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    font-family: "Orbitron", sans-serif;
+    /* Trapezoid buttons like on the site */
+    clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+}
+
+.cookie-button-reject {
+    background: transparent;
+    border: 2px solid #024f94; /* Border with midblue color */
+    color: #ffffff;
+}
+
+.cookie-button-reject:hover {
+    background: rgba(2, 79, 148, 0.2); /* Hover with midblue color */
+    border-color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.cookie-button-accept {
+    background: #e53935; /* Red accent color from the site */
+    color: #ffffff;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cookie-button-accept::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: all 0.6s;
+}
+
+.cookie-button-accept:hover {
+    background: rgba(229, 57, 53, 0.9); /* Lighter red on hover */
+    transform: translateY(-2px) scale(1.05);
+}
+
+.cookie-button-accept:hover::before {
+    left: 100%;
+}
+
+@media (max-width: 768px) {
+    .cookie-container {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .cookie-content {
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .cookie-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .cookie-button-reject,
+    .cookie-button-accept {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .cookie-title {
+        margin-right: 0;
+        justify-content: center;
+    }
+}
+</style>
+<div id="cookieConsent" class="cookie-consent">
+    <div class="cookie-container">
+        <div class="cookie-content">
+            <h3 class="cookie-title">
+                <i class="fas fa-cookie-bite"></i>
+                Cookie Policy
+            </h3>
+            <p class="cookie-text ">
+                At Tower Tactician we use cookies to improve your gaming experience. By continuing to use our website, you accept our use of cookies. For more information, please read our
+                <a href="/poliprivacy725/" class="cookie-link">Privacy Policy</a>,
+                the
+                <a href="/service2465/" class="cookie-link">Terms of Service</a>
+                and the
+                <a href="/cookiess367/" class="cookie-link">Cookie Policy</a>.
+            </p>
+        </div>
+        
+        <div class="cookie-buttons">
+            <button id="rejectCookies" class="cookie-button-reject">
+                Decline
+            </button>
+            <button id="acceptCookies" class="cookie-button-accept">
+                Accept
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+   const cookieConsent = document.getElementById("cookieConsent");
+   const acceptBtn = document.getElementById("acceptCookies");
+   const rejectBtn = document.getElementById("rejectCookies");
+   
+   if (!getCookie("aprenderd_cookie_consent")) {
+       setTimeout(() => {
+           cookieConsent.style.transform = "translateY(0)";
+       }, 1000);
+   }
+
+   function getCookie(name) {
+       let matches = document.cookie.match(new RegExp(
+           "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, "\\$1") + "=([^;]*)"
+       ));
+       return matches ? decodeURIComponent(matches[1]) : undefined;
+   }
+   
+   function setCookie(name, value, days) {
+       const date = new Date();
+       date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+       const expires = "; expires=" + date.toUTCString();
+       document.cookie = name + "=" + value + expires + "; path=/; SameSite=Strict; Secure";
+   }
+
+   function handleConsent(consent) {
+       setCookie("aprenderd_cookie_consent", consent, 365);
+       cookieConsent.style.transform = "translateY(100%)";
+       
+       setTimeout(() => {
+           cookieConsent.remove();
+       }, 500);
+   }
+
+   acceptBtn.addEventListener("click", () => handleConsent("accepted"));
+   rejectBtn.addEventListener("click", () => handleConsent("rejected"));
+});
+</script>
+';
+
+if (!isset($_COOKIE["aprenderd_cookie_consent"])) {
+    echo $cookieConsentHtml;
+}
+?>
